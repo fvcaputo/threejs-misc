@@ -83,55 +83,94 @@
                 }
             }
 
-            function sphereflake(group, material, pos, radius, depth = 1) {
+            function sphereflake(sphereList, sphere, depth = 1) {
                 if (depth < 0) {
                     return;
                 }
+                sphereList.push(sphere);
 
-                const geometry = new THREE.SphereBufferGeometry( radius, 9, 9 );
-                const sphere = new THREE.Mesh( geometry, material );
-                sphere.position.set( pos.x, pos.y, pos.z );
-                sphere.castShadow = true;
-                sphere.receiveShadow = true;
-                group.add( sphere );
+                const newRadius = sphere.r/3;
+                const distance = sphere.r + newRadius + 0.001; // some delta value
 
-                const newRadius = radius/3;
-                const distance = radius + newRadius;
                 let newPos = spherericalCoordsToCartesian(distance, PIdiv2, PIdiv4);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, PIdiv2, -PIdiv4);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
 
                 newPos = spherericalCoordsToCartesian(distance, -PIdiv2, PIdiv4);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, -PIdiv2, -PIdiv4);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
 
                 newPos = spherericalCoordsToCartesian(distance, PIdiv4, PI);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, -PIdiv4, PI);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
 
                 newPos = spherericalCoordsToCartesian(distance, ThreeTimesPIdiv4, PI);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, -ThreeTimesPIdiv4, PI);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
 
                 newPos = spherericalCoordsToCartesian(distance, PIdiv4, PIdiv2);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, PIdiv4, -PIdiv2);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
 
                 newPos = spherericalCoordsToCartesian(distance, ThreeTimesPIdiv4, PIdiv2);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
                 newPos = spherericalCoordsToCartesian(distance, -ThreeTimesPIdiv4, PIdiv2);
-                sphereflake(group, material, {x: pos.x + newPos.x, y: pos.y + newPos.y, z: pos.z + newPos.z}, newRadius, depth-1);
+                sphereflake(sphereList, {x: sphere.x + newPos.x, y: sphere.y + newPos.y, z: sphere.z + newPos.z, r: newRadius}, depth-1);
             }
+
+            function intersects(sphere1, sphere2) {
+                const distance = Math.sqrt(Math.pow(sphere1.x - sphere2.x, 2) +
+                                           Math.pow(sphere1.y - sphere2.y, 2) +
+                                           Math.pow(sphere1.z - sphere2.z, 2));
+                return sphere1.r + sphere2.r > distance;
+            }
+
+            function removeIntersectingSpheres(sphereList) {
+                const sphereListWithoutIntersections = [];
+                for (var i = 0; i < sphereList.length; i++) {
+                    const sphere1 = sphereList[i];
+                    let shouldAdd = true;
+                    for (var j = 0; j < sphereList.length; j++) {
+                        if (j == i) {
+                            continue;
+                        }
+                        const sphere2 = sphereList[j];
+                        if (sphere1.r < sphere2.r && intersects(sphere1, sphere2)) {
+                            shouldAdd = false;
+                            break;
+                        }
+                    }
+                    if (shouldAdd) {
+                        sphereListWithoutIntersections.push(sphere1);
+                    }
+                }
+                return sphereListWithoutIntersections;
+            }
+
+            // create the sphere flake
+            const sphereList = [];
+            sphereflake(sphereList, {x: 0, y: 0.3, z: 0, r: 1}, 3);
+
+            // remove intersecting spheres (always removes the smallest)
+            const finalSphereList = removeIntersectingSpheres(sphereList);
 
             // create the sphereflake, insert in "group"
             const material = new THREE.MeshPhongMaterial( { color: 0x6B9AA0, specular: 0x252525 } );
             const group = new THREE.Group();
-            sphereflake(group, material, {x: 0, y: 0.3, z: 0}, 1, 3);
+            for (var i = 0; i < finalSphereList.length; i++) {
+                const sphere = finalSphereList[i];
+                const geometry = new THREE.SphereBufferGeometry( sphere.r, 9, 9 );
+                const mesh = new THREE.Mesh( geometry, material );
+                mesh.position.set( sphere.x, sphere.y, sphere.z );
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                group.add( mesh );
+            }
             scene.add(group);
 
             // out gif recorder
@@ -159,7 +198,7 @@
 
                 capturer.capture( canvas );
             }
-            //capturer.start(); uncoment to record a gi.f
+            //capturer.start(); uncoment to record a .gif
             animate();
 
 		</script>
